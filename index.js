@@ -1,23 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const bookRoutes = require("./app/routes/bookRoutes");
-// automatically creating table on startup and inserting data
 const sequelize = require("./app/model/dbconfig");
 const Book = require("./app/model/book");
 
-// default loading data
+// automatically creating table on startup
 sequelize.sync({ force: true }).then(async () => {
   console.log("db is ready...");
-  // for (let i = 1; i < 11; i++) {
-  //   let num = Math.floor(Math.random() * 9000000000) + 1000000000;
-  //   const profile = {
-  //     name: `profile${i}`,
-  //     email: `profile${i}@automation.com`,
-  //     phone: num.toString()
-  //   };
-  //   await Profile.create(profile);
-  // }
-  //console.log("sample data inserted...");
 });
 
 const app = express();
