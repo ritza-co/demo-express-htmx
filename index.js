@@ -4,7 +4,6 @@ const bookRoutes = require("./app/routes/bookRoutes");
 // automatically creating table on startup and inserting data
 const sequelize = require("./app/model/dbconfig");
 const Book = require("./app/model/book");
-const axios = require('axios');
 
 const app = express();
 app.use(express.json());
@@ -17,25 +16,17 @@ app.set('view engine', 'pug');
 // application routes
 app.use("/api", bookRoutes.routes);
 
-app.get('/', (req, res) => {
-  axios
-  .get("http://127.0.0.1:3005/api/books")
-  .then(function (response) {
-    console.log('zvaita', response.data.context);
-    return res.render('index', {books: response.data.context});
-  }).catch((error)=>{
-    console.log('error', error);
-  });
+app.get('/', async (req, res) => {
+  const books = await Book.findAndCountAll();
+  return res.render('index', {books: books.rows});
 });
 
-app.get('/get-book-row/:id', (req, res) => {
+app.get('/get-book-row/:id', async (req, res) => {
   const id = req.params.id;
-  axios
-  .get(`http://127.0.0.1:3005/api/book/${id}`)
-  .then(function (response) {
+  await Book.findOne({ where: { id: id } }).then((book) => {
     return res.send(`<tr>
-    <td>${response.data.name}</td>
-    <td>${response.data.author}</td>
+    <td>${book.name}</td>
+    <td>${book.author}</td>
     <td>
         <button class="btn btn-primary"
             hx-get="/get-edit-form/${id}">
@@ -48,21 +39,16 @@ app.get('/get-book-row/:id', (req, res) => {
             Delete
         </button>
     </td>
-</tr>`)
-  }).catch((error)=>{
-    console.log('error', error);
+</tr>`);
   });
 });
 
-app.get('/get-edit-form/:id', (req, res) => {
+app.get('/get-edit-form/:id', async (req, res) => {
   const id = req.params.id;
-  axios
-  .get(`http://127.0.0.1:3005/api/book/${id}`)
-  .then(function (response) {
-    //console.log('zvaita', response.data);
+  await Book.findOne({ where: { id: id } }).then((book) => {
     return res.send(`<tr hx-trigger='cancel' class='editing' hx-get="/get-book-row/${id}">
-    <td><input name="title" value="${response.data.name}"/></td>
-    <td><input name="author" value="${response.data.author}"/></td>
+    <td><input name="title" value="${book.name}"/></td>
+    <td><input name="author" value="${book.author}"/></td>
     <td>
       <button class="btn btn-primary" hx-get="/get-book-row/${id}">
         Cancel
@@ -72,20 +58,20 @@ app.get('/get-edit-form/:id', (req, res) => {
       </button>
     </td>
   </tr>`);
-  }).catch((error)=>{
-    console.log('error', error);
   });
 });
 
-app.put('/update/:id', (req, res) => {
+app.put('/update/:id', async (req, res) => {
   const id = req.params.id;
   // update book
-  axios.put(`http://127.0.0.1:3005/api/book/${id}`, {
-    name: req.body.title,
-    author: req.body.author
-  })
-  .then(function () {
-    return res.send(`<tr>
+  await Book.findByPk(id).then((item) => {
+      item
+        .update({
+          name: req.body.title,
+          author: req.body.author
+        })
+        .then(() => {
+          return res.send(`<tr>
     <td>${req.body.title}</td>
     <td>${req.body.author}</td>
     <td>
@@ -100,50 +86,44 @@ app.put('/update/:id', (req, res) => {
             Delete
         </button>
     </td>
-</tr>`)
-})
-.catch(function (error) {
-});
-});
-
-app.delete('/delete/:id', (req, res) => {
-  const id = req.params.id;
-  axios
-  .delete(`http://127.0.0.1:3005/api/book/${id}`)
-  .then(function (response) {
-    return res.send("");
-  }).catch((error)=>{
-    console.log('error', error);
+</tr>`);
+        });
   });
 });
 
-app.post('/submit', (req, res) => {
+app.delete('/delete/:id', async (req, res) => {
+  const id = req.params.id;
+  await Book.findOne({ where: { id: id } }).then((book) => {
+      book.destroy();
+      return res.send("");
+  });
+});
+
+app.post('/submit', async (req, res) => {
   console.log('body - ', req.body);
-  axios.post('http://127.0.0.1:3005/api/book', {
+  const book = {
     name: req.body.title,
     author: req.body.author
-  })
-  .then(function (response) {
-    console.log('response id - ', response.data);
+  };
+  await Book.create(book).then((x) => {
+      //console.log('id- ', x.null)
+      // send id of recently created item
     return res.send(`<tr>
     <td>${req.body.title}</td>
     <td>${req.body.author}</td>
     <td>
         <button class="btn btn-primary"
-            hx-get="/get-edit-form/${response.data.id}">
+            hx-get="/get-edit-form/${x.null}">
             Edit Book
         </button>
     </td>
     <td>
-        <button hx-delete="/delete/${response.data.id}}"
+        <button hx-delete="/delete/${x.null}}"
             class="btn btn-primary">
             Delete
         </button>
     </td>
 </tr>`);
-  })
-  .catch(function (error) {
-    //console.log(error);
   });
 });
 
