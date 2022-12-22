@@ -11,7 +11,7 @@
 </p>
 
 <h1 align="center">
-  How to deploy a Flask HTMx application to production
+  Building a Full Stack Application with Express and HTMx
 </h1>
 
 <p align="center">
@@ -23,7 +23,7 @@
 <br/>
 
 <p>
-This is the code to accompany the tutorial available at <a href="https://codecapsules.io/docs/deployment/how-to-deploy-flask-htmx-application-to-production">How to deploy a Flask HTMx application to production</a>
+This is the code to accompany the tutorial available at <a href="https://codecapsules.io/docs/tutorials/build-express-htmx/">Building a Full Stack Application with Express and HTMx</a>
 </p>
 
 You might also be interested in our other resources:
